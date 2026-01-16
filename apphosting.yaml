@@ -7,7 +7,7 @@ runConfig:
   baseDirectory: apps/client 
 
 scripts:
-  # Usamos npm (npx) y turbo para construir solo el frontend
-  buildCommand: npx turbo run build --filter=client
-  # Ejecutamos el inicio de Next.js usando el workspace de npm
-  startCommand: npm start --workspace=client
+  # Usamos pnpm y turbo para construir solo el frontend
+  buildCommand: pnpm turbo run build --filter=client
+  # Ejecutamos el inicio de Next.js directamente
+  startCommand: pnpm --filter=client start
