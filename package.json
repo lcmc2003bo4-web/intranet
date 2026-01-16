@@ -1,0 +1,25 @@
+{
+  "name": "school-erp-monorepo",
+  "private": true,
+  "engines": {
+    "node": ">=18"
+  },
+  "packageManager": "npm@10.0.0",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "turbo build",
+    "dev": "turbo dev",
+    "lint": "turbo lint",
+    "format": "prettier --write \"**/*.{ts,tsx,md}\"",
+    "db:push": "npm run db:push --workspace=@repo/database",
+    "db:studio": "npm run db:studio --workspace=@repo/database"
+  },
+  "devDependencies": {
+    "turbo": "^2.3.3",
+    "prettier": "^3.4.2",
+    "typescript": "^5.7.2"
+  }
+}

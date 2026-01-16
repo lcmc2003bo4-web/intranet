@@ -1,0 +1,176 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  TEACHER
+  STUDENT
+  PARENT
+}
+
+enum PaymentStatus {
+  PENDING
+  IN_REVIEW
+  PAID
+  OVERDUE
+}
+
+enum GradeType {
+  EXAM
+  HOMEWORK
+  PROJECT
+}
+
+enum AttendanceStatus {
+  PRESENT
+  ABSENT
+  LATE
+  EXCUSED
+}
+
+model User {
+  id            String    @id @default(uuid())
+  name          String
+  email         String    @unique
+  phone         String?   // For WhatsApp
+  role          Role
+  firebaseToken String?   @map("firebase_token")
+  createdAt     DateTime  @default(now()) @map("created_at")
+
+  // Relations
+  studentProfile Student? // If role is STUDENT
+  children       Student[] @relation("ParentChildren") // If role is PARENT
+
+  @@map("users")
+}
+
+model Student {
+  id         String   @id // Same as User.id
+  user       User     @relation(fields: [id], references: [id])
+  
+  parentId   String?  @map("parent_id")
+  parent     User?    @relation("ParentChildren", fields: [parentId], references: [id])
+  
+  gradeLevel String   @map("grade_level")
+  section    String
+  
+  pensionPlans PensionPlan[]
+  enrollments  Enrollment[]
+  attendance   Attendance[]
+
+  @@map("students")
+}
+
+model PensionPlan {
+  id                 String    @id @default(uuid())
+  studentId          String    @map("student_id")
+  student            Student   @relation(fields: [studentId], references: [id])
+  
+  amount             Decimal
+  dueDate            DateTime  @map("due_date")
+  billingPeriodStart DateTime  @map("billing_period_start")
+  billingPeriodEnd   DateTime  @map("billing_period_end")
+  
+  status             PaymentStatus @default(PENDING) // Computed/updated status
+  
+  payments           Payment[]
+
+  @@map("pension_plans")
+}
+
+model Payment {
+  id              String        @id @default(uuid())
+  pensionPlanId   String        @map("pension_plan_id")
+  pensionPlan     PensionPlan   @relation(fields: [pensionPlanId], references: [id])
+  
+  amountPaid      Decimal       @map("amount_paid")
+  paymentDate     DateTime      @default(now()) @map("payment_date")
+  status          PaymentStatus @default(IN_REVIEW)
+  receiptImageUrl String?       @map("receipt_image_url")
+  validatedAt     DateTime?     @map("validated_at")
+
+  @@map("payments")
+}
+
+model Subject {
+  id          String       @id @default(uuid())
+  name        String
+  code        String       @unique
+  
+  enrollments Enrollment[]
+
+  @@map("subjects")
+}
+
+model Enrollment {
+  id           String    @id @default(uuid())
+  studentId    String    @map("student_id")
+  student      Student   @relation(fields: [studentId], references: [id])
+  
+  subjectId    String    @map("subject_id")
+  subject      Subject   @relation(fields: [subjectId], references: [id])
+  
+  academicYear String    @map("academic_year")
+  
+  grades       Grade[]
+
+  @@unique([studentId, subjectId, academicYear])
+  @@map("enrollments")
+}
+
+model Grade {
+  id           String    @id @default(uuid())
+  enrollmentId String    @map("enrollment_id")
+  enrollment   Enrollment @relation(fields: [enrollmentId], references: [id])
+  
+  period       String    // e.g., "Q1", "Q2", "Term 1"
+  value        Decimal
+  weight       Decimal   // 0.0 to 1.0 or percentage
+  type         GradeType
+  recordedAt   DateTime  @default(now()) @map("recorded_at")
+
+  @@map("grades")
+}
+
+model Attendance {
+  id          String           @id @default(uuid())
+  studentId   String           @map("student_id")
+  student     Student          @relation(fields: [studentId], references: [id])
+  
+  date        DateTime
+  status      AttendanceStatus
+  checkInTime DateTime?        @map("check_in_time")
+  createdAt   DateTime         @default(now()) @map("created_at")
+
+  @@map("attendance")
+}
+
+model Post {
+  id        String   @id @default(uuid())
+  title     String
+  content   String
+  authorId  String   @map("author_id") // Could be Teacher or Admin
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("posts")
+}
+
+model Message {
+  id         String   @id @default(uuid())
+  senderId   String   @map("sender_id")
+  receiverId String   @map("receiver_id") // Could be a Group ID too
+  content    String
+  createdAt  DateTime @default(now()) @map("created_at")
+  isSystem   Boolean  @default(false) @map("is_system") // For auto-replies
+
+  @@map("messages")
+}
