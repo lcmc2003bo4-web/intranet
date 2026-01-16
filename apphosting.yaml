@@ -1,0 +1,13 @@
+# apphosting.yaml
+runtimeConfig:
+  nodeVersion: 20
+
+runConfig:
+  # Indica la carpeta donde está tu aplicación de Next.js
+  baseDirectory: apps/client 
+
+scripts:
+  # Usamos npm (npx) y turbo para construir solo el frontend
+  buildCommand: npx turbo run build --filter=client
+  # Ejecutamos el inicio de Next.js usando el workspace de npm
+  startCommand: npm start --workspace=client
